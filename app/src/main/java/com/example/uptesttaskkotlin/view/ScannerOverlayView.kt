@@ -1,4 +1,4 @@
-package com.example.uptesttaskkotlin
+package com.example.uptesttaskkotlin.view
 
 import android.content.Context
 import android.graphics.Canvas
@@ -9,6 +9,7 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 import androidx.core.content.ContextCompat
+import com.example.uptesttaskkotlin.R
 import kotlin.math.min
 
 /**

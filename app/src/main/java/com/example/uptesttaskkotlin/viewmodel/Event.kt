@@ -1,4 +1,4 @@
-package com.example.uptesttaskkotlin
+package com.example.uptesttaskkotlin.viewmodel
 
 /**
  * A LiveData value that must be handled only once.

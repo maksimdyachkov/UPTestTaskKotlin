@@ -1,4 +1,4 @@
-package com.example.uptesttaskkotlin
+package com.example.uptesttaskkotlin.view
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -11,7 +11,12 @@ import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.uptesttaskkotlin.R
 import com.example.uptesttaskkotlin.databinding.ActivityMainBinding
+import com.example.uptesttaskkotlin.view.camera.BarcodeAnalyzer
+import com.example.uptesttaskkotlin.view.camera.BarcodeCameraController
+import com.example.uptesttaskkotlin.view.camera.DetectedBarcode
+import com.example.uptesttaskkotlin.viewmodel.MainViewModel
 
 class MainActivity : AppCompatActivity() {
 

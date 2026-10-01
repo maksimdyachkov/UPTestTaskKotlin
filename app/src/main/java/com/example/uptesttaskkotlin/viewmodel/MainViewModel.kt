@@ -1,10 +1,12 @@
-package com.example.uptesttaskkotlin
+package com.example.uptesttaskkotlin.viewmodel
 
 import android.os.SystemClock
 import androidx.annotation.MainThread
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.uptesttaskkotlin.model.BarcodeItem
+import com.example.uptesttaskkotlin.model.repository.BarcodeRepository
 
 class MainViewModel(
     private val clock: () -> Long = SystemClock::elapsedRealtime

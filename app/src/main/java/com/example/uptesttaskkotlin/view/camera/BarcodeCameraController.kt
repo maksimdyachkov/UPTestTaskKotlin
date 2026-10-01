@@ -1,4 +1,4 @@
-package com.example.uptesttaskkotlin
+package com.example.uptesttaskkotlin.view.camera
 
 import android.content.Context
 import androidx.camera.core.CameraSelector

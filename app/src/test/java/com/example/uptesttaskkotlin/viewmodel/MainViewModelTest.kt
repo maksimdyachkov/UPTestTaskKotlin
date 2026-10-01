@@ -1,4 +1,4 @@
-package com.example.uptesttaskkotlin
+package com.example.uptesttaskkotlin.viewmodel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import org.junit.Assert.assertEquals

@@ -1,4 +1,4 @@
-package com.example.uptesttaskkotlin
+package com.example.uptesttaskkotlin.view.camera
 
 import android.graphics.Rect
 import androidx.camera.core.ImageAnalysis

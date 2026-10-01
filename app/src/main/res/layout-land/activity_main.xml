@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:baselineAligned="false"
     android:orientation="horizontal"
-    tools:context=".MainActivity">
+    tools:context=".view.MainActivity">
 
     <FrameLayout
         android:layout_width="0dp"
@@ -20,7 +20,7 @@
             android:layout_height="match_parent"
             android:visibility="invisible" />
 
-        <com.example.uptesttaskkotlin.ScannerOverlayView
+        <com.example.uptesttaskkotlin.view.ScannerOverlayView
             android:id="@+id/scannerOverlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

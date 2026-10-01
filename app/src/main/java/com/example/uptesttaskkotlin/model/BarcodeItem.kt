@@ -1,4 +1,4 @@
-package com.example.uptesttaskkotlin
+package com.example.uptesttaskkotlin.model
 
 data class BarcodeItem(
     val id: String,

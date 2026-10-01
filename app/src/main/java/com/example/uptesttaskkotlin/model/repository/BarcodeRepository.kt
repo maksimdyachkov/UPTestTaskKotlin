@@ -1,7 +1,8 @@
-package com.example.uptesttaskkotlin
+package com.example.uptesttaskkotlin.model.repository
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.uptesttaskkotlin.model.BarcodeItem
 import java.util.UUID
 
 /**
