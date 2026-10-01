@@ -94,7 +94,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startCamera() {
-        cameraController.start(BarcodeAnalyzer(viewModel::onBarcodeScanned))
+        val analyzer = BarcodeAnalyzer(
+            callbackExecutor = ContextCompat.getMainExecutor(this),
+            onBarcodeDetected = viewModel::onBarcodeScanned
+        )
+        cameraController.start(analyzer)
     }
 
     private fun isCameraPermissionGranted() =

@@ -5,8 +5,14 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
+import java.util.concurrent.Executor
 
+/**
+ * [analyze] is called by CameraX on a background thread. Results are delivered on
+ * [callbackExecutor], so the caller decides which thread [onBarcodeDetected] runs on.
+ */
 class BarcodeAnalyzer(
+    private val callbackExecutor: Executor,
     private val onBarcodeDetected: (displayValue: String, rawValue: String?) -> Unit
 ) : ImageAnalysis.Analyzer {
 
@@ -19,7 +25,7 @@ class BarcodeAnalyzer(
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
             scanner.process(image)
-                .addOnSuccessListener { barcodes ->
+                .addOnSuccessListener(callbackExecutor) { barcodes ->
                     if (barcodes.isNotEmpty()) {
                         val firstBarcode = barcodes.first()
                         val displayValue = firstBarcode.displayValue ?: firstBarcode.rawValue ?: ""
@@ -28,10 +34,10 @@ class BarcodeAnalyzer(
                         }
                     }
                 }
-                .addOnFailureListener {
+                .addOnFailureListener(callbackExecutor) {
                     // Failures can be handled here
                 }
-                .addOnCompleteListener {
+                .addOnCompleteListener(callbackExecutor) {
                     // ML Kit reads the frame asynchronously, so the proxy can be released only
                     // once processing is done. Until then CameraX delivers no new frames.
                     imageProxy.close()

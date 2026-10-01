@@ -14,9 +14,8 @@ import java.util.Locale
 class BarcodeAdapter : ListAdapter<BarcodeItem, BarcodeAdapter.ViewHolder>(BarcodeDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-
-         val view = LayoutInflater.from(parent.context).inflate(android.R.layout.simple_list_item_2, null, false)
-
+        val view = LayoutInflater.from(parent.context)
+            .inflate(android.R.layout.simple_list_item_2, parent, false)
         return ViewHolder(view)
     }
 
