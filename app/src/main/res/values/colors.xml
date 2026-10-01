@@ -7,4 +7,7 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="panel_background">#FFEEEEEE</color>
+    <!-- Shown on the always-black camera area, so it does not depend on the theme. -->
+    <color name="camera_hint">#B3FFFFFF</color>
 </resources>

@@ -17,7 +17,7 @@ class BarcodeAnalyzer(
         val mediaImage = imageProxy.image
         if (mediaImage != null) {
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-            
+
             scanner.process(image)
                 .addOnSuccessListener { barcodes ->
                     if (barcodes.isNotEmpty()) {
@@ -32,6 +32,9 @@ class BarcodeAnalyzer(
                     // Failures can be handled here
                 }
                 .addOnCompleteListener {
+                    // ML Kit reads the frame asynchronously, so the proxy can be released only
+                    // once processing is done. Until then CameraX delivers no new frames.
+                    imageProxy.close()
                 }
         } else {
             imageProxy.close()

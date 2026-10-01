@@ -20,6 +20,10 @@ class MainViewModel : ViewModel() {
         _isScanning.value = !(_isScanning.value ?: false)
     }
 
+    fun stopScanning() {
+        _isScanning.value = false
+    }
+
     fun onBarcodeScanned(displayValue: String, rawValue: String?) {
         _currentScanResult.value = displayValue
         repository.addBarcode(displayValue, rawValue)

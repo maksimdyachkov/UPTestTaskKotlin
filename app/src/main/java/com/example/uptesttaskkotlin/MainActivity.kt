@@ -4,26 +4,31 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.isInvisible
+import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.uptesttaskkotlin.databinding.ActivityMainBinding
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var viewModel: MainViewModel
-    private lateinit var cameraExecutor: ExecutorService
-    private var isCameraStarted = false
-    private var cameraProvider: ProcessCameraProvider? = null
+    private lateinit var cameraController: BarcodeCameraController
+
+    private val cameraPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            startCamera()
+        } else {
+            Toast.makeText(this, R.string.camera_permission_denied, Toast.LENGTH_LONG).show()
+            viewModel.stopScanning()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +36,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
-        cameraExecutor = Executors.newSingleThreadExecutor()
+        cameraController = BarcodeCameraController(this, this, binding.previewView)
 
         setupRecyclerView()
         setupObservers()
@@ -57,14 +62,15 @@ class MainActivity : AppCompatActivity() {
 
         // Observe scanning state
         viewModel.isScanning.observe(this) { isScanning ->
+            // A stopped PreviewView keeps showing its last frame, so hide it behind a hint.
+            binding.previewView.isInvisible = !isScanning
+            binding.tvCameraHint.isVisible = !isScanning
             if (isScanning) {
                 binding.btnToggleScan.text = getString(R.string.stop_scanning)
-                if (!isCameraStarted) {
-                    checkPermissionsAndStartCamera()
-                }
+                checkPermissionsAndStartCamera()
             } else {
                 binding.btnToggleScan.text = getString(R.string.start_scanning)
-                stopCamera()
+                cameraController.stop()
             }
         }
     }
@@ -80,33 +86,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermissionsAndStartCamera() {
-        if (allPermissionsGranted()) {
+        if (isCameraPermissionGranted()) {
             startCamera()
         } else {
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
     private fun startCamera() {
-        isCameraStarted = true
-        Toast.makeText(this, "Camera mode activated (Stub)", Toast.LENGTH_SHORT).show()
+        cameraController.start(BarcodeAnalyzer(viewModel::onBarcodeScanned))
     }
 
-    private fun stopCamera() {
-        isCameraStarted = false
-    }
-
-    private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
-        ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        cameraExecutor.shutdown()
-    }
-
-    companion object {
-        private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-    }
+    private fun isCameraPermissionGranted() =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) ==
+            PackageManager.PERMISSION_GRANTED
 }
