@@ -20,6 +20,10 @@ class MainViewModel(
     private val _isScanning = MutableLiveData<Boolean>(false)
     val isScanning: LiveData<Boolean> = _isScanning
 
+    /** Emitted for every frame a barcode is detected in, including repeats of the same code. */
+    private val _barcodeInViewEvent = MutableLiveData<Event<Unit>>()
+    val barcodeInViewEvent: LiveData<Event<Unit>> = _barcodeInViewEvent
+
     private var lastScannedValue: String? = null
     private var lastSeenAt = 0L
 
@@ -38,6 +42,8 @@ class MainViewModel(
      */
     @MainThread
     fun onBarcodeScanned(displayValue: String, rawValue: String?) {
+        _barcodeInViewEvent.value = Event(Unit)
+
         val now = clock()
         val isRepeat = displayValue == lastScannedValue && now - lastSeenAt < DUPLICATE_WINDOW_MS
         lastScannedValue = displayValue

@@ -19,6 +19,13 @@
             android:layout_height="match_parent"
             android:visibility="invisible" />
 
+        <com.example.uptesttaskkotlin.ScannerOverlayView
+            android:id="@+id/scannerOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:importantForAccessibility="no"
+            android:visibility="invisible" />
+
         <TextView
             android:id="@+id/tvCameraHint"
             android:layout_width="wrap_content"

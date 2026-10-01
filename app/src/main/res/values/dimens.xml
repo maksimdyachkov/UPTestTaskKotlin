@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="scanner_frame_corner_radius">16dp</dimen>
+    <dimen name="scanner_frame_corner_length">32dp</dimen>
+    <dimen name="scanner_frame_stroke_width">4dp</dimen>
+    <!-- How far a barcode may reach beyond the frame and still count as inside it. -->
+    <dimen name="scanner_frame_tolerance">8dp</dimen>
+</resources>

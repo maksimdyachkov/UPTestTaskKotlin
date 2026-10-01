@@ -5,9 +5,11 @@ import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
+import androidx.camera.core.UseCaseGroup
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnLayout
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import java.util.concurrent.ExecutorService
@@ -40,13 +42,16 @@ class BarcodeCameraController(
         isStartRequested = true
         val providerFuture = ProcessCameraProvider.getInstance(context)
         providerFuture.addListener({
-            // Scanning may have been stopped while the provider was initializing.
-            if (!isStartRequested) return@addListener
-            try {
-                val provider = providerFuture.get().also { cameraProvider = it }
-                bindUseCases(provider, analyzer)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to start camera", e)
+            // The view port is derived from the PreviewView size, so wait until it is laid out.
+            previewView.doOnLayout {
+                // Scanning may have been stopped while the provider was initializing.
+                if (!isStartRequested) return@doOnLayout
+                try {
+                    val provider = providerFuture.get().also { cameraProvider = it }
+                    bindUseCases(provider, analyzer)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to start camera", e)
+                }
             }
         }, ContextCompat.getMainExecutor(context))
     }
@@ -74,8 +79,15 @@ class BarcodeCameraController(
             .build()
             .also { it.setAnalyzer(analysisExecutor, analyzer) }
 
+        val useCases = UseCaseGroup.Builder()
+            .addUseCase(preview)
+            .addUseCase(analysis)
+        // Makes ImageProxy.cropRect match the part of the frame that the preview shows,
+        // so barcode positions can be compared with the viewfinder on screen.
+        previewView.viewPort?.let(useCases::setViewPort)
+
         provider.unbindAll()
-        provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis)
+        provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, useCases.build())
         imageAnalysis = analysis
     }
 

@@ -3,6 +3,8 @@ package com.example.uptesttaskkotlin
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -105,6 +107,26 @@ class MainViewModelTest {
 
         assertEquals(CODE_B, viewModel.currentScanResult.value)
         assertEquals(listOf(CODE_B, CODE_A), viewModel.scanHistory.value!!.map { it.displayValue })
+    }
+
+    @Test
+    fun `detected barcode emits an in-view event that can be handled only once`() {
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+
+        val event = viewModel.barcodeInViewEvent.value!!
+        assertNotNull(event.getContentIfNotHandled())
+        assertNull(event.getContentIfNotHandled())
+    }
+
+    @Test
+    fun `repeated detection of the same barcode emits a new in-view event without a new history entry`() {
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+        viewModel.barcodeInViewEvent.value!!.getContentIfNotHandled()
+
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+
+        assertNotNull(viewModel.barcodeInViewEvent.value!!.getContentIfNotHandled())
+        assertEquals(1, viewModel.scanHistory.value!!.size)
     }
 
     @Test

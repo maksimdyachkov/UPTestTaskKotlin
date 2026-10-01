@@ -10,4 +10,7 @@
     <color name="panel_background">#FFEEEEEE</color>
     <!-- Shown on the always-black camera area, so it does not depend on the theme. -->
     <color name="camera_hint">#B3FFFFFF</color>
+    <color name="scanner_scrim">#99000000</color>
+    <color name="scanner_frame">#FFFFFFFF</color>
+    <color name="scanner_frame_detected">#FF4CAF50</color>
 </resources>

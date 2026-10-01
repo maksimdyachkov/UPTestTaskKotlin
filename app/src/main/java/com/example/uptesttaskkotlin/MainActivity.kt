@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
         cameraController = BarcodeCameraController(this, this, binding.previewView)
         barcodeAnalyzer = BarcodeAnalyzer(
             callbackExecutor = ContextCompat.getMainExecutor(this),
-            onBarcodeDetected = viewModel::onBarcodeScanned
+            onBarcodesDetected = ::onBarcodesDetected
         )
 
         setupRecyclerView()
@@ -65,10 +65,15 @@ class MainActivity : AppCompatActivity() {
             binding.tvScanResult.text = result
         }
 
+        viewModel.barcodeInViewEvent.observe(this) { event ->
+            event.getContentIfNotHandled()?.let { binding.scannerOverlay.showDetected() }
+        }
+
         // Observe scanning state
         viewModel.isScanning.observe(this) { isScanning ->
             // A stopped PreviewView keeps showing its last frame, so hide it behind a hint.
             binding.previewView.isInvisible = !isScanning
+            binding.scannerOverlay.isInvisible = !isScanning
             binding.tvCameraHint.isVisible = !isScanning
             if (isScanning) {
                 binding.btnToggleScan.text = getString(R.string.stop_scanning)
@@ -100,6 +105,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun startCamera() {
         cameraController.start(barcodeAnalyzer)
+    }
+
+    private fun onBarcodesDetected(barcodes: List<DetectedBarcode>) {
+        // Only a barcode that fits into the viewfinder counts as scanned.
+        val barcode = barcodes.firstOrNull { binding.scannerOverlay.isInsideFrame(it.bounds) }
+            ?: return
+        viewModel.onBarcodeScanned(barcode.displayValue, barcode.rawValue)
     }
 
     private fun isCameraPermissionGranted() =
