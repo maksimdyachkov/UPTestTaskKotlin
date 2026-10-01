@@ -1,34 +1,138 @@
 package com.example.uptesttaskkotlin
 
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
-/**
- * Unit tests for MainViewModel.
- * 
- * SPACE FOR TEST WRITINGS:
- * Currently, checking LiveData directly in pure JUnit tests can fail or be tricky 
- * without InstantTaskExecutorRule or proper lifecycle extensions.
- * Candidate should add proper architecture test rules or coroutine test dispatchers if needed,
- * and implement complete test coverage for toggleScanning and onBarcodeScanned.
- */
 class MainViewModelTest {
 
+    // LiveData.setValue() asserts the main thread via Looper, which does not exist on the JVM.
+    // The rule swaps the Architecture Components executor for a synchronous one.
+    @get:Rule
+    val instantTaskExecutorRule = InstantTaskExecutorRule()
+
+    private var now = 0L
     private lateinit var viewModel: MainViewModel
 
     @Before
     fun setUp() {
-        viewModel = MainViewModel()
+        now = 0L
+        viewModel = MainViewModel(clock = { now })
     }
 
     @Test
-    fun testInitialState() {
-        // Placeholder test
-        // NOTE: Direct observation of LiveData in pure tests might return null without an observer or rule.
-        // Candidate should improve this setup!
-        assertFalse(viewModel.isScanning.value ?: false)
+    fun `initial state is not scanning with empty history`() {
+        assertFalse(viewModel.isScanning.value!!)
+        assertEquals(NO_RESULT, viewModel.currentScanResult.value)
+        assertTrue(viewModel.scanHistory.value!!.isEmpty())
+    }
+
+    @Test
+    fun `toggleScanning switches scanning on and off`() {
+        viewModel.toggleScanning()
+        assertTrue(viewModel.isScanning.value!!)
+
+        viewModel.toggleScanning()
+        assertFalse(viewModel.isScanning.value!!)
+    }
+
+    @Test
+    fun `stopScanning turns scanning off`() {
+        viewModel.toggleScanning()
+
+        viewModel.stopScanning()
+
+        assertFalse(viewModel.isScanning.value!!)
+    }
+
+    @Test
+    fun `stopScanning keeps scanning off when it is already off`() {
+        viewModel.stopScanning()
+
+        assertFalse(viewModel.isScanning.value!!)
+    }
+
+    @Test
+    fun `scanned barcode becomes the current result and is added to history`() {
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+
+        assertEquals(CODE_A, viewModel.currentScanResult.value)
+        val item = viewModel.scanHistory.value!!.single()
+        assertEquals(CODE_A, item.displayValue)
+        assertEquals(RAW_A, item.rawValue)
+    }
+
+    @Test
+    fun `barcode that stays in view is recorded once`() {
+        // One detection per frame for much longer than the duplicate window.
+        repeat(100) {
+            viewModel.onBarcodeScanned(CODE_A, RAW_A)
+            now += FRAME_INTERVAL_MS
+        }
+
+        assertEquals(1, viewModel.scanHistory.value!!.size)
+    }
+
+    @Test
+    fun `same barcode is recorded again after it was out of view long enough`() {
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+        now += MainViewModel.DUPLICATE_WINDOW_MS
+
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+
+        assertEquals(2, viewModel.scanHistory.value!!.size)
+    }
+
+    @Test
+    fun `same barcode is ignored just before the duplicate window ends`() {
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+        now += MainViewModel.DUPLICATE_WINDOW_MS - 1
+
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+
+        assertEquals(1, viewModel.scanHistory.value!!.size)
+    }
+
+    @Test
+    fun `different barcode is recorded immediately and placed first`() {
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+
+        viewModel.onBarcodeScanned(CODE_B, null)
+
+        assertEquals(CODE_B, viewModel.currentScanResult.value)
+        assertEquals(listOf(CODE_B, CODE_A), viewModel.scanHistory.value!!.map { it.displayValue })
+    }
+
+    @Test
+    fun `clearHistory empties history and resets the current result`() {
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+
+        viewModel.clearHistory()
+
+        assertTrue(viewModel.scanHistory.value!!.isEmpty())
+        assertEquals(NO_RESULT, viewModel.currentScanResult.value)
+    }
+
+    @Test
+    fun `barcode can be scanned again right after history is cleared`() {
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+        viewModel.clearHistory()
+
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+
+        assertEquals(1, viewModel.scanHistory.value!!.size)
+        assertEquals(CODE_A, viewModel.currentScanResult.value)
+    }
+
+    private companion object {
+        const val NO_RESULT = "No barcode scanned yet"
+        const val CODE_A = "https://ukrposhta.ua/track/A"
+        const val RAW_A = "raw-A"
+        const val CODE_B = "4820000000017"
+        const val FRAME_INTERVAL_MS = 33L
     }
 }
