@@ -107,6 +107,28 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `two barcodes that stay in view together are recorded once each`() {
+        // Both codes are reported for every frame, in no particular order.
+        repeat(100) { frame ->
+            val codes = if (frame % 2 == 0) listOf(CODE_A, CODE_B) else listOf(CODE_B, CODE_A)
+            codes.forEach { viewModel.onBarcodeScanned(it, null) }
+            now += FRAME_INTERVAL_MS
+        }
+
+        assertEquals(2, viewModel.scanHistory.value!!.size)
+    }
+
+    @Test
+    fun `barcode is not recorded again when another one is scanned in between`() {
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+        viewModel.onBarcodeScanned(CODE_B, null)
+
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+
+        assertEquals(listOf(CODE_B, CODE_A), viewModel.scanHistory.value!!.map { it.displayValue })
+    }
+
+    @Test
     fun `different barcode is recorded immediately and placed first`() {
         viewModel.onBarcodeScanned(CODE_A, RAW_A)
 

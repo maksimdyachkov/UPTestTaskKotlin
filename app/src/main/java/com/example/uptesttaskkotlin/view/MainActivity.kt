@@ -26,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var cameraController: BarcodeCameraController
     private lateinit var barcodeAnalyzer: BarcodeAnalyzer
+    private val historyAdapter = BarcodeAdapter()
 
     private val cameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -55,15 +56,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        val adapter = BarcodeAdapter()
         binding.rvScanHistory.layoutManager = LinearLayoutManager(this)
-        binding.rvScanHistory.adapter = adapter
+        binding.rvScanHistory.adapter = historyAdapter
     }
 
     private fun setupObservers() {
         // Observe history to submit to adapter
         viewModel.scanHistory.observe(this) { history ->
-            (binding.rvScanHistory.adapter as? BarcodeAdapter)?.submitList(history)
+            val previousFirst = historyAdapter.currentList.firstOrNull()
+            historyAdapter.submitList(history) {
+                // RecyclerView keeps its position when an item is inserted above the visible
+                // ones, which would leave a new scan off-screen in a long history.
+                if (previousFirst != null && history.firstOrNull() != previousFirst) {
+                    binding.rvScanHistory.scrollToPosition(0)
+                }
+            }
         }
 
         // Observe current result text
@@ -114,10 +121,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onBarcodesDetected(barcodes: List<DetectedBarcode>) {
-        // Only a barcode that fits into the viewfinder counts as scanned.
-        val barcode = barcodes.firstOrNull { binding.scannerOverlay.isInsideFrame(it.bounds) }
-            ?: return
-        viewModel.onBarcodeScanned(barcode.displayValue, barcode.rawValue)
+        // Only barcodes that fit into the viewfinder count as scanned.
+        barcodes
+            .filter { binding.scannerOverlay.isInsideFrame(it.bounds) }
+            .forEach { viewModel.onBarcodeScanned(it.displayValue, it.rawValue) }
     }
 
     private fun isCameraPermissionGranted() =

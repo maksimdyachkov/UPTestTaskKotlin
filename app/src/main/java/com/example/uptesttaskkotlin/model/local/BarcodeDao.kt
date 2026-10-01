@@ -8,8 +8,11 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface BarcodeDao {
 
-    /** Newest first; rowid breaks ties between scans saved within the same millisecond. */
-    @Query("SELECT * FROM barcodes ORDER BY timestamp DESC, rowid DESC")
+    /**
+     * Last inserted first. Ordering by rowid instead of the timestamp keeps the order stable
+     * when the device clock is changed.
+     */
+    @Query("SELECT * FROM barcodes ORDER BY rowid DESC")
     fun observeAll(): Flow<List<BarcodeEntity>>
 
     @Insert

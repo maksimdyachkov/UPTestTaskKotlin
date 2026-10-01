@@ -31,8 +31,8 @@ class MainViewModel @Inject constructor(
     private val _barcodeInViewEvent = MutableLiveData<Event<Unit>>()
     val barcodeInViewEvent: LiveData<Event<Unit>> = _barcodeInViewEvent
 
-    private var lastScannedValue: String? = null
-    private var lastSeenAt = 0L
+    /** When each barcode value was last detected; holds only values seen recently. */
+    private val lastSeenAt = mutableMapOf<String, Long>()
 
     fun toggleScanning() {
         _isScanning.value = !(_isScanning.value ?: false)
@@ -44,17 +44,16 @@ class MainViewModel @Inject constructor(
 
     /**
      * The analyzer reports a barcode for every frame it is visible in. A code is treated as
-     * a new scan only if it differs from the previous one or was out of sight for at least
-     * [DUPLICATE_WINDOW_MS].
+     * a new scan only if it has been out of sight for at least [DUPLICATE_WINDOW_MS].
+     * Every value is tracked separately, so several codes in view do not re-add each other.
      */
     @MainThread
     fun onBarcodeScanned(displayValue: String, rawValue: String?) {
         _barcodeInViewEvent.value = Event(Unit)
 
         val now = clock.now()
-        val isRepeat = displayValue == lastScannedValue && now - lastSeenAt < DUPLICATE_WINDOW_MS
-        lastScannedValue = displayValue
-        lastSeenAt = now
+        lastSeenAt.values.removeAll { seenAt -> now - seenAt >= DUPLICATE_WINDOW_MS }
+        val isRepeat = lastSeenAt.put(displayValue, now) != null
         if (isRepeat) return
 
         _currentScanResult.value = displayValue
@@ -63,7 +62,7 @@ class MainViewModel @Inject constructor(
 
     fun clearHistory() {
         viewModelScope.launch { repository.clearHistory() }
-        lastScannedValue = null
+        lastSeenAt.clear()
         _currentScanResult.value = "No barcode scanned yet"
     }
 

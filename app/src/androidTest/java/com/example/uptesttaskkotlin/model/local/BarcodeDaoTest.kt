@@ -42,16 +42,17 @@ class BarcodeDaoTest {
     }
 
     @Test
-    fun barcodesAreReturnedNewestFirst() = runTest {
-        dao.insert(BarcodeEntity("old", "A", "raw-A", 100L))
-        dao.insert(BarcodeEntity("new", "B", "raw-B", 200L))
+    fun barcodesAreReturnedLastInsertedFirst() = runTest {
+        dao.insert(BarcodeEntity("first", "A", "raw-A", 100L))
+        dao.insert(BarcodeEntity("second", "B", "raw-B", 200L))
 
-        assertEquals(listOf("new", "old"), dao.observeAll().first().map { it.id })
+        assertEquals(listOf("second", "first"), dao.observeAll().first().map { it.id })
     }
 
     @Test
-    fun barcodesWithTheSameTimestampAreReturnedLastInsertedFirst() = runTest {
-        dao.insert(BarcodeEntity("first", "A", null, 100L))
+    fun orderDoesNotDependOnTimestamps() = runTest {
+        // The device clock was set back between the two scans.
+        dao.insert(BarcodeEntity("first", "A", null, 200L))
         dao.insert(BarcodeEntity("second", "B", null, 100L))
 
         assertEquals(listOf("second", "first"), dao.observeAll().first().map { it.id })
