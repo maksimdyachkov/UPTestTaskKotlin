@@ -104,7 +104,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startCamera() {
-        cameraController.start(barcodeAnalyzer)
+        cameraController.start(barcodeAnalyzer.analyzer)
     }
 
     private fun onBarcodesDetected(barcodes: List<DetectedBarcode>) {

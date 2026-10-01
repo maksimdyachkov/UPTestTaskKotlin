@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.Rect
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
@@ -52,12 +53,15 @@ class ScannerOverlayView @JvmOverloads constructor(
         postDelayed(resetCornerColor, DETECTED_HOLD_MS)
     }
 
-    /** Whether [bounds] fit into the frame, allowing a small overshoot at the edges. */
-    fun isInsideFrame(bounds: NormalizedRect): Boolean =
-        bounds.left * width >= frame.left - frameTolerance &&
-            bounds.top * height >= frame.top - frameTolerance &&
-            bounds.right * width <= frame.right + frameTolerance &&
-            bounds.bottom * height <= frame.bottom + frameTolerance
+    /**
+     * Whether [bounds], given in the coordinates of this view, fit into the frame.
+     * A small overshoot at the edges is allowed.
+     */
+    fun isInsideFrame(bounds: Rect): Boolean =
+        bounds.left >= frame.left - frameTolerance &&
+            bounds.top >= frame.top - frameTolerance &&
+            bounds.right <= frame.right + frameTolerance &&
+            bounds.bottom <= frame.bottom + frameTolerance
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
