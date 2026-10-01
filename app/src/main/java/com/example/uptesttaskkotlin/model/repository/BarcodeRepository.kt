@@ -1,14 +1,14 @@
 package com.example.uptesttaskkotlin.model.repository
 
-import androidx.lifecycle.LiveData
 import com.example.uptesttaskkotlin.model.BarcodeItem
+import kotlinx.coroutines.flow.Flow
 
 /** Stores the history of scanned barcodes, newest first. */
 interface BarcodeRepository {
 
-    val history: LiveData<List<BarcodeItem>>
+    val history: Flow<List<BarcodeItem>>
 
-    fun addBarcode(value: String, rawValue: String?)
+    suspend fun addBarcode(value: String, rawValue: String?)
 
-    fun clearHistory()
+    suspend fun clearHistory()
 }

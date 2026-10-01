@@ -1,7 +1,8 @@
 package com.example.uptesttaskkotlin.viewmodel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.example.uptesttaskkotlin.model.repository.InMemoryBarcodeRepository
+import com.example.uptesttaskkotlin.model.repository.FakeBarcodeRepository
+import com.example.uptesttaskkotlin.util.MainDispatcherRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -18,13 +19,18 @@ class MainViewModelTest {
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
     private var now = 0L
     private lateinit var viewModel: MainViewModel
 
     @Before
     fun setUp() {
         now = 0L
-        viewModel = MainViewModel(InMemoryBarcodeRepository(), clock = { now })
+        viewModel = MainViewModel(FakeBarcodeRepository(), clock = { now })
+        // The history LiveData collects from the repository only while it is observed.
+        viewModel.scanHistory.observeForever { }
     }
 
     @Test

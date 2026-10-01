@@ -4,11 +4,14 @@ import androidx.annotation.MainThread
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
 import com.example.uptesttaskkotlin.model.BarcodeItem
 import com.example.uptesttaskkotlin.model.repository.BarcodeRepository
 import com.example.uptesttaskkotlin.util.ElapsedClock
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -16,7 +19,7 @@ class MainViewModel @Inject constructor(
     private val clock: ElapsedClock
 ) : ViewModel() {
 
-    val scanHistory: LiveData<List<BarcodeItem>> = repository.history
+    val scanHistory: LiveData<List<BarcodeItem>> = repository.history.asLiveData()
 
     private val _currentScanResult = MutableLiveData<String>("No barcode scanned yet")
     val currentScanResult: LiveData<String> = _currentScanResult
@@ -55,11 +58,11 @@ class MainViewModel @Inject constructor(
         if (isRepeat) return
 
         _currentScanResult.value = displayValue
-        repository.addBarcode(displayValue, rawValue)
+        viewModelScope.launch { repository.addBarcode(displayValue, rawValue) }
     }
 
     fun clearHistory() {
-        repository.clearHistory()
+        viewModelScope.launch { repository.clearHistory() }
         lastScannedValue = null
         _currentScanResult.value = "No barcode scanned yet"
     }

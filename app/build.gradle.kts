@@ -40,6 +40,11 @@ android {
     }
 }
 
+ksp {
+    // Keeps the database schema under version control so migrations can be verified.
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -49,6 +54,11 @@ dependencies {
     // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     // ViewModel & LiveData
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
@@ -66,6 +76,8 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.androidx.arch.core.testing)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
 }
