@@ -5,11 +5,11 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.uptesttaskkotlin.R
 import com.example.uptesttaskkotlin.databinding.ActivityMainBinding
@@ -17,11 +17,13 @@ import com.example.uptesttaskkotlin.view.camera.BarcodeAnalyzer
 import com.example.uptesttaskkotlin.view.camera.BarcodeCameraController
 import com.example.uptesttaskkotlin.view.camera.DetectedBarcode
 import com.example.uptesttaskkotlin.viewmodel.MainViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var viewModel: MainViewModel
+    private val viewModel: MainViewModel by viewModels()
     private lateinit var cameraController: BarcodeCameraController
     private lateinit var barcodeAnalyzer: BarcodeAnalyzer
 
@@ -41,7 +43,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         cameraController = BarcodeCameraController(this, this, binding.previewView)
         barcodeAnalyzer = BarcodeAnalyzer(
             callbackExecutor = ContextCompat.getMainExecutor(this),

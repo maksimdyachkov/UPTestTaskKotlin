@@ -1,6 +1,7 @@
 package com.example.uptesttaskkotlin.viewmodel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.example.uptesttaskkotlin.model.repository.InMemoryBarcodeRepository
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -23,7 +24,7 @@ class MainViewModelTest {
     @Before
     fun setUp() {
         now = 0L
-        viewModel = MainViewModel(clock = { now })
+        viewModel = MainViewModel(InMemoryBarcodeRepository(), clock = { now })
     }
 
     @Test

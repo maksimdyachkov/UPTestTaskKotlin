@@ -1,18 +1,20 @@
 package com.example.uptesttaskkotlin.viewmodel
 
-import android.os.SystemClock
 import androidx.annotation.MainThread
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.uptesttaskkotlin.model.BarcodeItem
 import com.example.uptesttaskkotlin.model.repository.BarcodeRepository
+import com.example.uptesttaskkotlin.util.ElapsedClock
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class MainViewModel(
-    private val clock: () -> Long = SystemClock::elapsedRealtime
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val repository: BarcodeRepository,
+    private val clock: ElapsedClock
 ) : ViewModel() {
-
-    private val repository = BarcodeRepository()
 
     val scanHistory: LiveData<List<BarcodeItem>> = repository.history
 
@@ -46,7 +48,7 @@ class MainViewModel(
     fun onBarcodeScanned(displayValue: String, rawValue: String?) {
         _barcodeInViewEvent.value = Event(Unit)
 
-        val now = clock()
+        val now = clock.now()
         val isRepeat = displayValue == lastScannedValue && now - lastSeenAt < DUPLICATE_WINDOW_MS
         lastScannedValue = displayValue
         lastSeenAt = now
