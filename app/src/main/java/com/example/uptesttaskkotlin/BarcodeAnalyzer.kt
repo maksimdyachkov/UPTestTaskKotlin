@@ -5,16 +5,20 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
+import java.io.Closeable
 import java.util.concurrent.Executor
 
 /**
  * [analyze] is called by CameraX on a background thread. Results are delivered on
  * [callbackExecutor], so the caller decides which thread [onBarcodeDetected] runs on.
+ *
+ * Holds an ML Kit scanner with native resources: call [close] when the analyzer is
+ * no longer needed.
  */
 class BarcodeAnalyzer(
     private val callbackExecutor: Executor,
     private val onBarcodeDetected: (displayValue: String, rawValue: String?) -> Unit
-) : ImageAnalysis.Analyzer {
+) : ImageAnalysis.Analyzer, Closeable {
 
     private val scanner = BarcodeScanning.getClient()
 
@@ -45,5 +49,9 @@ class BarcodeAnalyzer(
         } else {
             imageProxy.close()
         }
+    }
+
+    override fun close() {
+        scanner.close()
     }
 }

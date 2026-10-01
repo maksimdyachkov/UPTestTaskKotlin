@@ -18,6 +18,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var viewModel: MainViewModel
     private lateinit var cameraController: BarcodeCameraController
+    private lateinit var barcodeAnalyzer: BarcodeAnalyzer
 
     private val cameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -37,6 +38,10 @@ class MainActivity : AppCompatActivity() {
 
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         cameraController = BarcodeCameraController(this, this, binding.previewView)
+        barcodeAnalyzer = BarcodeAnalyzer(
+            callbackExecutor = ContextCompat.getMainExecutor(this),
+            onBarcodeDetected = viewModel::onBarcodeScanned
+        )
 
         setupRecyclerView()
         setupObservers()
@@ -94,14 +99,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startCamera() {
-        val analyzer = BarcodeAnalyzer(
-            callbackExecutor = ContextCompat.getMainExecutor(this),
-            onBarcodeDetected = viewModel::onBarcodeScanned
-        )
-        cameraController.start(analyzer)
+        cameraController.start(barcodeAnalyzer)
     }
 
     private fun isCameraPermissionGranted() =
         ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) ==
             PackageManager.PERMISSION_GRANTED
+
+    override fun onDestroy() {
+        super.onDestroy()
+        barcodeAnalyzer.close()
+    }
 }
