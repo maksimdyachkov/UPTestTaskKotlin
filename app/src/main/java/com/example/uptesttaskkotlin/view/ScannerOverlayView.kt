@@ -42,9 +42,8 @@ class ScannerOverlayView @JvmOverloads constructor(
     }
 
     private val frame = RectF()
-    private val arcBounds = RectF()
     private val scrimPath = Path().apply { fillType = Path.FillType.EVEN_ODD }
-    private val cornersPath = Path()
+    private val cornerPath = Path()
     private val resetCornerColor = Runnable { setCornerColor(idleColor) }
 
     /** Highlights the corners until no detection has been reported for [DETECTED_HOLD_MS]. */
@@ -74,43 +73,32 @@ class ScannerOverlayView @JvmOverloads constructor(
         scrimPath.addRect(0f, 0f, w.toFloat(), h.toFloat(), Path.Direction.CW)
         scrimPath.addRoundRect(frame, cornerRadius, cornerRadius, Path.Direction.CW)
 
-        cornersPath.reset()
-        addCorner(frame.left, frame.top + cornerLength, frame.left, frame.top, 180f,
-            frame.left + cornerLength, frame.top)
-        addCorner(frame.right - cornerLength, frame.top, frame.right, frame.top, 270f,
-            frame.right, frame.top + cornerLength)
-        addCorner(frame.right, frame.bottom - cornerLength, frame.right, frame.bottom, 0f,
-            frame.right - cornerLength, frame.bottom)
-        addCorner(frame.left + cornerLength, frame.bottom, frame.left, frame.bottom, 90f,
-            frame.left, frame.bottom - cornerLength)
+        // The top-left mark: up the left edge, around the rounded corner, along the top edge.
+        val arcSize = cornerRadius * 2
+        cornerPath.reset()
+        cornerPath.moveTo(frame.left, frame.top + cornerLength)
+        cornerPath.arcTo(
+            frame.left, frame.top, frame.left + arcSize, frame.top + arcSize, 180f, 90f, false
+        )
+        cornerPath.lineTo(frame.left + cornerLength, frame.top)
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawPath(scrimPath, scrimPaint)
-        canvas.drawPath(cornersPath, cornerPaint)
+
+        // The frame is a square, so the same mark rotated around its center gives all four.
+        val saveCount = canvas.save()
+        repeat(4) {
+            canvas.drawPath(cornerPath, cornerPaint)
+            canvas.rotate(90f, frame.centerX(), frame.centerY())
+        }
+        canvas.restoreToCount(saveCount)
     }
 
     override fun onDetachedFromWindow() {
         removeCallbacks(resetCornerColor)
         super.onDetachedFromWindow()
-    }
-
-    /** Adds an L-shaped mark with a rounded bend at the frame vertex ([vertexX], [vertexY]). */
-    private fun addCorner(
-        startX: Float, startY: Float,
-        vertexX: Float, vertexY: Float,
-        startAngle: Float,
-        endX: Float, endY: Float
-    ) {
-        val diameter = cornerRadius * 2
-        val arcLeft = if (vertexX == frame.left) vertexX else vertexX - diameter
-        val arcTop = if (vertexY == frame.top) vertexY else vertexY - diameter
-        arcBounds.set(arcLeft, arcTop, arcLeft + diameter, arcTop + diameter)
-
-        cornersPath.moveTo(startX, startY)
-        cornersPath.arcTo(arcBounds, startAngle, 90f)
-        cornersPath.lineTo(endX, endY)
     }
 
     private fun setCornerColor(color: Int) {

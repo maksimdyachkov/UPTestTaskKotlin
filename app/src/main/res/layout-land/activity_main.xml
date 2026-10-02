@@ -107,7 +107,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:padding="8dp"
-            tools:listitem="@android:layout/simple_list_item_1"/>
+            tools:listitem="@android:layout/simple_list_item_2"/>
 
     </LinearLayout>
 

@@ -28,19 +28,11 @@ class MainViewModel @Inject constructor(
     private val _isScanning = MutableLiveData<Boolean>(false)
     val isScanning: LiveData<Boolean> = _isScanning
 
-    /** Emitted for every frame a barcode is detected in, including repeats of the same code. */
-    private val _barcodeInViewEvent = MutableLiveData<Event<Unit>>()
-    val barcodeInViewEvent: LiveData<Event<Unit>> = _barcodeInViewEvent
-
     /** When each barcode value was last detected; holds only values seen recently. */
     private val lastSeenAt = mutableMapOf<String, Long>()
 
     fun toggleScanning() {
         _isScanning.value = !(_isScanning.value ?: false)
-    }
-
-    fun stopScanning() {
-        _isScanning.value = false
     }
 
     /**
@@ -52,8 +44,6 @@ class MainViewModel @Inject constructor(
     fun onBarcodeScanned(displayValue: String, rawValue: String?) {
         // A frame that was still being processed when scanning stopped reports its result late.
         if (_isScanning.value != true) return
-
-        _barcodeInViewEvent.value = Event(Unit)
 
         val now = clock.now()
         lastSeenAt.values.removeAll { seenAt -> now - seenAt >= DUPLICATE_WINDOW_MS }

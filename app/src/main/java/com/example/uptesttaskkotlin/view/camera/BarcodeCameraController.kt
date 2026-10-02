@@ -53,6 +53,5 @@ class BarcodeCameraController(
     override fun onDestroy(owner: LifecycleOwner) {
         stop()
         analysisExecutor.shutdown()
-        owner.lifecycle.removeObserver(this)
     }
 }
