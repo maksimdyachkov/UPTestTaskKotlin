@@ -36,7 +36,7 @@ class MainViewModelTest {
     @Test
     fun `initial state is not scanning with empty history`() {
         assertFalse(viewModel.isScanning.value!!)
-        assertEquals(NO_RESULT, viewModel.currentScanResult.value)
+        assertNull(viewModel.currentScanResult.value)
         assertTrue(viewModel.scanHistory.value!!.isEmpty())
     }
 
@@ -66,7 +66,27 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `barcode detected before scanning is started is ignored`() {
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+
+        assertNull(viewModel.currentScanResult.value)
+        assertNull(viewModel.barcodeInViewEvent.value)
+        assertTrue(viewModel.scanHistory.value!!.isEmpty())
+    }
+
+    @Test
+    fun `barcode reported after scanning is stopped is ignored`() {
+        startScanning()
+        viewModel.stopScanning()
+
+        viewModel.onBarcodeScanned(CODE_A, RAW_A)
+
+        assertTrue(viewModel.scanHistory.value!!.isEmpty())
+    }
+
+    @Test
     fun `scanned barcode becomes the current result and is added to history`() {
+        startScanning()
         viewModel.onBarcodeScanned(CODE_A, RAW_A)
 
         assertEquals(CODE_A, viewModel.currentScanResult.value)
@@ -77,6 +97,7 @@ class MainViewModelTest {
 
     @Test
     fun `barcode that stays in view is recorded once`() {
+        startScanning()
         // One detection per frame for much longer than the duplicate window.
         repeat(100) {
             viewModel.onBarcodeScanned(CODE_A, RAW_A)
@@ -88,6 +109,7 @@ class MainViewModelTest {
 
     @Test
     fun `same barcode is recorded again after it was out of view long enough`() {
+        startScanning()
         viewModel.onBarcodeScanned(CODE_A, RAW_A)
         now += MainViewModel.DUPLICATE_WINDOW_MS
 
@@ -98,6 +120,7 @@ class MainViewModelTest {
 
     @Test
     fun `same barcode is ignored just before the duplicate window ends`() {
+        startScanning()
         viewModel.onBarcodeScanned(CODE_A, RAW_A)
         now += MainViewModel.DUPLICATE_WINDOW_MS - 1
 
@@ -108,6 +131,7 @@ class MainViewModelTest {
 
     @Test
     fun `two barcodes that stay in view together are recorded once each`() {
+        startScanning()
         // Both codes are reported for every frame, in no particular order.
         repeat(100) { frame ->
             val codes = if (frame % 2 == 0) listOf(CODE_A, CODE_B) else listOf(CODE_B, CODE_A)
@@ -120,6 +144,7 @@ class MainViewModelTest {
 
     @Test
     fun `barcode is not recorded again when another one is scanned in between`() {
+        startScanning()
         viewModel.onBarcodeScanned(CODE_A, RAW_A)
         viewModel.onBarcodeScanned(CODE_B, null)
 
@@ -130,6 +155,7 @@ class MainViewModelTest {
 
     @Test
     fun `different barcode is recorded immediately and placed first`() {
+        startScanning()
         viewModel.onBarcodeScanned(CODE_A, RAW_A)
 
         viewModel.onBarcodeScanned(CODE_B, null)
@@ -140,6 +166,7 @@ class MainViewModelTest {
 
     @Test
     fun `detected barcode emits an in-view event that can be handled only once`() {
+        startScanning()
         viewModel.onBarcodeScanned(CODE_A, RAW_A)
 
         val event = viewModel.barcodeInViewEvent.value!!
@@ -149,6 +176,7 @@ class MainViewModelTest {
 
     @Test
     fun `repeated detection of the same barcode emits a new in-view event without a new history entry`() {
+        startScanning()
         viewModel.onBarcodeScanned(CODE_A, RAW_A)
         viewModel.barcodeInViewEvent.value!!.getContentIfNotHandled()
 
@@ -160,16 +188,18 @@ class MainViewModelTest {
 
     @Test
     fun `clearHistory empties history and resets the current result`() {
+        startScanning()
         viewModel.onBarcodeScanned(CODE_A, RAW_A)
 
         viewModel.clearHistory()
 
         assertTrue(viewModel.scanHistory.value!!.isEmpty())
-        assertEquals(NO_RESULT, viewModel.currentScanResult.value)
+        assertNull(viewModel.currentScanResult.value)
     }
 
     @Test
     fun `barcode can be scanned again right after history is cleared`() {
+        startScanning()
         viewModel.onBarcodeScanned(CODE_A, RAW_A)
         viewModel.clearHistory()
 
@@ -179,8 +209,9 @@ class MainViewModelTest {
         assertEquals(CODE_A, viewModel.currentScanResult.value)
     }
 
+    private fun startScanning() = viewModel.toggleScanning()
+
     private companion object {
-        const val NO_RESULT = "No barcode scanned yet"
         const val CODE_A = "https://ukrposhta.ua/track/A"
         const val RAW_A = "raw-A"
         const val CODE_B = "4820000000017"

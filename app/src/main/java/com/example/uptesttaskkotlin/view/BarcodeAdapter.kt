@@ -1,5 +1,6 @@
 package com.example.uptesttaskkotlin.view
 
+import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,26 +9,33 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.uptesttaskkotlin.model.BarcodeItem
-import java.text.SimpleDateFormat
+import java.text.DateFormat
 import java.util.Date
-import java.util.Locale
 
 class BarcodeAdapter : ListAdapter<BarcodeItem, BarcodeAdapter.ViewHolder>(BarcodeDiffCallback()) {
+
+    // The history outlives a single day, so the date is shown along with the time.
+    private val dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(android.R.layout.simple_list_item_2, parent, false)
-        return ViewHolder(view)
+        return ViewHolder(view, dateFormat)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(getItem(position))
     }
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    class ViewHolder(view: View, private val dateFormat: DateFormat) : RecyclerView.ViewHolder(view) {
         private val text1: TextView = view.findViewById(android.R.id.text1)
         private val text2: TextView = view.findViewById(android.R.id.text2)
-        private val dateFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+
+        init {
+            // A barcode can hold hundreds of characters and line breaks: show one line with "…".
+            text1.isSingleLine = true
+            text1.ellipsize = TextUtils.TruncateAt.END
+        }
 
         fun bind(item: BarcodeItem) {
             text1.text = item.displayValue

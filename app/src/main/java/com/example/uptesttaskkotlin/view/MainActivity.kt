@@ -28,9 +28,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var barcodeAnalyzer: BarcodeAnalyzer
     private val historyAdapter = BarcodeAdapter()
 
+    // Survives rotation, so the system dialog that is already on screen is not requested again.
+    private var isPermissionRequestPending = false
+
     private val cameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
+        isPermissionRequestPending = false
         if (isGranted) {
             startCamera()
         } else {
@@ -43,6 +47,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        isPermissionRequestPending =
+            savedInstanceState?.getBoolean(KEY_PERMISSION_REQUEST_PENDING) ?: false
 
         cameraController = BarcodeCameraController(this, this, binding.previewView)
         barcodeAnalyzer = BarcodeAnalyzer(
@@ -75,7 +81,11 @@ class MainActivity : AppCompatActivity() {
 
         // Observe current result text
         viewModel.currentScanResult.observe(this) { result ->
-            binding.tvScanResult.text = result
+            binding.tvScanResult.text = if (result == null) {
+                getString(R.string.no_barcode_scanned)
+            } else {
+                getString(R.string.scanned_result_prefix, result)
+            }
         }
 
         viewModel.barcodeInViewEvent.observe(this) { event ->
@@ -111,7 +121,8 @@ class MainActivity : AppCompatActivity() {
     private fun checkPermissionsAndStartCamera() {
         if (isCameraPermissionGranted()) {
             startCamera()
-        } else {
+        } else if (!isPermissionRequestPending) {
+            isPermissionRequestPending = true
             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
@@ -131,8 +142,17 @@ class MainActivity : AppCompatActivity() {
         ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) ==
             PackageManager.PERMISSION_GRANTED
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(KEY_PERMISSION_REQUEST_PENDING, isPermissionRequestPending)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         barcodeAnalyzer.close()
+    }
+
+    private companion object {
+        const val KEY_PERMISSION_REQUEST_PENDING = "permission_request_pending"
     }
 }

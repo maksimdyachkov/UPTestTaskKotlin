@@ -21,8 +21,9 @@ class MainViewModel @Inject constructor(
 
     val scanHistory: LiveData<List<BarcodeItem>> = repository.history.asLiveData()
 
-    private val _currentScanResult = MutableLiveData<String>("No barcode scanned yet")
-    val currentScanResult: LiveData<String> = _currentScanResult
+    /** The barcode scanned last, or null if nothing has been scanned yet. */
+    private val _currentScanResult = MutableLiveData<String?>(null)
+    val currentScanResult: LiveData<String?> = _currentScanResult
 
     private val _isScanning = MutableLiveData<Boolean>(false)
     val isScanning: LiveData<Boolean> = _isScanning
@@ -49,6 +50,9 @@ class MainViewModel @Inject constructor(
      */
     @MainThread
     fun onBarcodeScanned(displayValue: String, rawValue: String?) {
+        // A frame that was still being processed when scanning stopped reports its result late.
+        if (_isScanning.value != true) return
+
         _barcodeInViewEvent.value = Event(Unit)
 
         val now = clock.now()
@@ -63,7 +67,7 @@ class MainViewModel @Inject constructor(
     fun clearHistory() {
         viewModelScope.launch { repository.clearHistory() }
         lastSeenAt.clear()
-        _currentScanResult.value = "No barcode scanned yet"
+        _currentScanResult.value = null
     }
 
     companion object {

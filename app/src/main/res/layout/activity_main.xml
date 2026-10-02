@@ -54,6 +54,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/no_barcode_scanned"
+            android:singleLine="true"
+            android:ellipsize="end"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="?android:attr/textColorPrimary"
